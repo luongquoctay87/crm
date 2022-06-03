@@ -1,8 +1,9 @@
 {
 	"info": {
-		"_postman_id": "a39ebb93-3727-46de-b4fd-630cedcf4b17",
+		"_postman_id": "e12c73d4-5dff-47b7-a1e9-939be8dc6ca6",
 		"name": "crm",
-		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "19479649"
 	},
 	"item": [
 		{
@@ -119,7 +120,7 @@
 					"raw": ""
 				},
 				"url": {
-					"raw": "http://{{API-GATEWAY}}/api/v1/users/1",
+					"raw": "http://{{API-GATEWAY}}/api/v1/users/5",
 					"protocol": "http",
 					"host": [
 						"{{API-GATEWAY}}"
@@ -128,7 +129,7 @@
 						"api",
 						"v1",
 						"users",
-						"1"
+						"5"
 					]
 				}
 			},
@@ -151,7 +152,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n    \"username\":\"tester1\",\r\n    \"password\":\"password\",\r\n    \"rePassword\":\"password\"\r\n}",
+					"raw": "{\r\n    \"firstName\":\"John\",\r\n    \"middleName\":\"Alex\",\r\n    \"surname\":\"Doe\",\r\n    \"fullName\":\"John Alex Doe\",\r\n    \"phone\":\"0975-118-228\",\r\n    \"email\":\"someone@email.com\",\r\n    \"address\":\"Cau Giay, Hanoi\",\r\n    \"username\":\"user4\",\r\n    \"password\":\"password\",\r\n    \"rePassword\":\"password\"\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -190,7 +191,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n    \"username\":\"tester10\"\r\n}",
+					"raw": "{\r\n    \"id\": 5,\r\n    \"firstName\":\"Leonel\",\r\n    \"middleName\":\"\",\r\n    \"surname\":\"Messi\",\r\n    \"fullName\":\"Leonel Messi\",\r\n    \"phone\":\"0975-118-228\",\r\n    \"email\":\"someone@email.com\",\r\n    \"address\":\"Cau Giay, Hanoi\",\r\n    \"username\":\"userr4\"\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -198,7 +199,7 @@
 					}
 				},
 				"url": {
-					"raw": "http://{{API-GATEWAY}}/api/v1/users/10",
+					"raw": "http://{{API-GATEWAY}}/api/v1/users",
 					"protocol": "http",
 					"host": [
 						"{{API-GATEWAY}}"
@@ -206,8 +207,7 @@
 					"path": [
 						"api",
 						"v1",
-						"users",
-						"10"
+						"users"
 					]
 				}
 			},
@@ -229,16 +229,22 @@
 				"method": "PATCH",
 				"header": [],
 				"body": {
-					"mode": "raw",
-					"raw": "{\r\n    \"password\":\"password\",\r\n    \"rePassword\":\"password\"\r\n}",
-					"options": {
-						"raw": {
-							"language": "json"
+					"mode": "urlencoded",
+					"urlencoded": [
+						{
+							"key": "password",
+							"value": "password",
+							"type": "text"
+						},
+						{
+							"key": "rePassword",
+							"value": "password",
+							"type": "text"
 						}
-					}
+					]
 				},
 				"url": {
-					"raw": "http://{{API-GATEWAY}}/api/v1/users/changePassword/10",
+					"raw": "http://{{API-GATEWAY}}/api/v1/users/changePassword/5",
 					"protocol": "http",
 					"host": [
 						"{{API-GATEWAY}}"
@@ -248,7 +254,7 @@
 						"v1",
 						"users",
 						"changePassword",
-						"10"
+						"5"
 					]
 				}
 			},
@@ -270,7 +276,7 @@
 				"method": "DELETE",
 				"header": [],
 				"url": {
-					"raw": "http://{{API-GATEWAY}}/api/v1/users/10",
+					"raw": "http://{{API-GATEWAY}}/api/v1/users/5",
 					"protocol": "http",
 					"host": [
 						"{{API-GATEWAY}}"
@@ -279,7 +285,7 @@
 						"api",
 						"v1",
 						"users",
-						"10"
+						"5"
 					]
 				}
 			},

@@ -1,6 +1,6 @@
-CREATE DATABASE crm_db;
-
-\c crm_db;
+--CREATE DATABASE crm_db;
+--
+--\c crm_db;
 
 CREATE TYPE E_METHODS AS ENUM ('GET', 'POST', 'PUT', 'PATCH', 'DELETE');
 CREATE TABLE tbl_activities (
