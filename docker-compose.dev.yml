@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  crm-service:
+    image: luongquoctay87/crm-service:v1.0.0
+    container_name: crm-service
+    environment:
+      - DB_URL=${POSTGRES_URL}
+      - DB_PORT=${POSTGRES_PORT}
+      - DB_NAME=${POSTGRES_DB}
+      - DB_USER=${POSTGRES_USER}
+      - DB_PASSWORD=${POSTGRES_PASSWORD}
+    ports:
+      - "8080:8080"
+    networks:
+      - crm
+
+  prometheus:
+    image: "prom/prometheus"
+    container_name: prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    networks:
+      - crm
+
+  grafana:
+    image: "grafana/grafana"
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    networks:
+      - crm
+
+networks:
+  crm:
+    name: crm-network
