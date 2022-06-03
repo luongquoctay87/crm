@@ -1,0 +1,335 @@
+{
+	"info": {
+		"_postman_id": "a39ebb93-3727-46de-b4fd-630cedcf4b17",
+		"name": "crm",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "/authenticate",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonData = JSON.parse(responseBody);\r",
+							"postman.setEnvironmentVariable(\"access_token\", jsonData.token);"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"username\":\"sysadmin\",\r\n    \"password\":\"password\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://{{API-GATEWAY}}/api/v1/authenticate",
+					"protocol": "http",
+					"host": [
+						"{{API-GATEWAY}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"authenticate"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "users",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{access_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://{{API-GATEWAY}}/api/v1/users",
+					"protocol": "http",
+					"host": [
+						"{{API-GATEWAY}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"users"
+					],
+					"query": [
+						{
+							"key": "pageNo",
+							"value": "1",
+							"disabled": true
+						},
+						{
+							"key": "pageSize",
+							"value": "20",
+							"disabled": true
+						},
+						{
+							"key": "search",
+							"value": "editor",
+							"disabled": true
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "user",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{access_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "http://{{API-GATEWAY}}/api/v1/users/1",
+					"protocol": "http",
+					"host": [
+						"{{API-GATEWAY}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"users",
+						"1"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "users",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{access_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"username\":\"tester1\",\r\n    \"password\":\"password\",\r\n    \"rePassword\":\"password\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://{{API-GATEWAY}}/api/v1/users",
+					"protocol": "http",
+					"host": [
+						"{{API-GATEWAY}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"users"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "users",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{access_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"username\":\"tester10\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://{{API-GATEWAY}}/api/v1/users/10",
+					"protocol": "http",
+					"host": [
+						"{{API-GATEWAY}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"users",
+						"10"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "change password",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{access_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "PATCH",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"password\":\"password\",\r\n    \"rePassword\":\"password\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://{{API-GATEWAY}}/api/v1/users/changePassword/10",
+					"protocol": "http",
+					"host": [
+						"{{API-GATEWAY}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"users",
+						"changePassword",
+						"10"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "user",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{access_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "http://{{API-GATEWAY}}/api/v1/users/10",
+					"protocol": "http",
+					"host": [
+						"{{API-GATEWAY}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"users",
+						"10"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "actuator",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://{{API-GATEWAY}}/api/v1/actuator",
+					"protocol": "http",
+					"host": [
+						"{{API-GATEWAY}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"actuator"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Swagger-UI.html",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://{{API-GATEWAY}}/api/v1/swagger-ui.html",
+					"protocol": "http",
+					"host": [
+						"{{API-GATEWAY}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"swagger-ui.html"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

@@ -1,0 +1,21 @@
+api:
+  info:
+    title: Wealth Management API Services
+    description: API to fetch review details for application
+    version: 1.0.0
+    terms-of-service: https://beetsoft.com.vn/terms/
+    contact:
+      name: BEETSOFT CO., LTD
+      email: contact@beetsoft.com.vn
+      url: https://beetsoft.com.vn/
+    license:
+      name: Apache 2.0
+      url: http://www.apache.org/licenses/LICENSE-2.0.html
+
+server:
+  port: 8080
+  forward-headers-strategy: framework
+
+springdoc:
+  swagger-ui:
+    path: '/swagger-ui.html'
