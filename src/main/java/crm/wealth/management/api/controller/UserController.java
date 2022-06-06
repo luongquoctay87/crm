@@ -147,7 +147,7 @@ public class UserController {
         } catch (Exception e) {
             log.error("Can not execute forgot password");
             log.error(e.getMessage());
-            return new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Forgot password fail");
+            return new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Forgot password fail");
         }
     }
 }
