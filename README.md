@@ -6,7 +6,7 @@
 - Spring boot jwt
 - Spring boot jpa
 - Spring boot actuator
-- MySQL 8.0.28
+- Postgres
 - Swagger 3.0
 - Docker
 - Grafana & Prometheus

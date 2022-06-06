@@ -84,7 +84,7 @@ CREATE TABLE tbl_users (
 	created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 	updated_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 	PRIMARY KEY(id),
-	UNIQUE(username)
+	UNIQUE(username, email)
 );
 INSERT INTO public.tbl_users (first_name,middle_name,surname,full_name,phone,email,address,username,"password",enabled,created_date,updated_date) VALUES
 	 ('Admin',NULL,'System','System Admin','0975-118-228','admin@email.com','Cau Giay, Hanoi','sysadmin','$2a$10$slYQmyNdGzTn7ZLBXBChFOC9f6kFjAqPhccnP6DxlWXx2lPk1C3G6','true','2022-06-02 16:58:30.374977','2022-06-02 16:58:30.374977'),
