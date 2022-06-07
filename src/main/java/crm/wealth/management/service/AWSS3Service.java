@@ -23,7 +23,6 @@ public class AWSS3Service {
 
     public String uploadFile(MultipartFile file) {
         String key = generateFileName(file);
-        System.out.println("key:" + key);
         ObjectMetadata metaData = new ObjectMetadata();
         metaData.setContentLength(file.getSize());
         metaData.setContentType(file.getContentType());
