@@ -1,14 +1,18 @@
 package crm.wealth.management.service;
 
 import crm.wealth.management.api.form.UserForm;
+import crm.wealth.management.api.response.ApiResponse;
+import crm.wealth.management.api.response.ErrorResponse;
 import crm.wealth.management.config.ResourceNotFoundException;
 import crm.wealth.management.model.AppUser;
 import crm.wealth.management.repository.UserRepo;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -16,10 +20,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 public class UserService implements UserDetailsService {
@@ -30,6 +31,9 @@ public class UserService implements UserDetailsService {
 	private PasswordEncoder encoder;
 	@Autowired
 	private ModelMapper mapper;
+
+	@Autowired
+	private MailService mailService;
 
 	@Override
 	public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
@@ -128,4 +132,14 @@ public class UserService implements UserDetailsService {
 			return false;
 	}
 
+	public ApiResponse forgotPassword(String email) {
+		String password = RandomStringUtils.random(10, true, true);
+		AppUser user = userRepo.findByEmail(email);
+		if (user == null)
+			return new ErrorResponse(HttpStatus.NOT_FOUND.value(), "Email " + email + " not found");
+		user.setPassword(encoder.encode(password));
+		mailService.sendSimpleMessage(email, "[CRM SYSTEM] - Forgot Password", "New password: " + password);
+		userRepo.save(user);
+		return new ApiResponse(HttpStatus.OK.value(), "Forgot password successful");
+	}
 }

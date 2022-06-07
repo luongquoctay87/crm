@@ -138,4 +138,16 @@ public class UserController {
             return new ErrorResponse(HttpStatus.NO_CONTENT.value(), "Delete user fail");
         }
     }
+
+    @PutMapping("/forgot-password")
+    public ApiResponse forgotPassword(@RequestParam String email) {
+        try {
+            log.info("Request forgot password, email = {}, ", email);
+            return userService.forgotPassword(email);
+        } catch (Exception e) {
+            log.error("Can not execute forgot password");
+            log.error(e.getMessage());
+            return new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Forgot password fail");
+        }
+    }
 }

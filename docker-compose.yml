@@ -29,6 +29,10 @@ services:
       - DB_USER=postgres
       - DB_PASSWORD=password
       - JAVA_TOOL_OPTIONS="-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005"
+      - MAIL_USERNAME=crm@gmail.com
+      - MAIL_PASSWORD=password
+      - MAIL_HOST=smtp.gmail.com
+      - MAIL_PORT=587
     ports:
       - "8080:8080"
       - "5005:5005"

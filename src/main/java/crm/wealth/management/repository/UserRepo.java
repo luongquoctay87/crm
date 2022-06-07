@@ -21,4 +21,6 @@ public interface UserRepo extends PagingAndSortingRepository<AppUser, Long> {
             "INNER JOIN tbl_user_roles usr ON usr.role_id = r.id " +
             "WHERE usr.user_id = (SELECT u.id FROM tbl_users u WHERE u.username = :username)", nativeQuery = true)
     List<String> findRoleByUsername(String username);
+
+    AppUser findByEmail(String email);
 }
