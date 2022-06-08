@@ -1,9 +1,10 @@
 package crm.wealth.management.service;
 
-import crm.wealth.management.api.form.CompanyForm;
+import crm.wealth.management.api.form.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.*;
 
@@ -14,212 +15,177 @@ public class SchemaService {
     @Autowired
     private ConnectService connectService;
 
-    public void createSchema(String schema) {
-        Connection c = connectService.getConnection(null);
-        Statement stmt = null;
-        try {
-            String sql = "CREATE SCHEMA " + schema;
-            stmt = c.createStatement();
-            stmt.executeUpdate(sql);
-            stmt.close();
-            c.close();
-            log.error("Create schema {} successful", schema);
-        } catch (SQLException e) {
+    private final String TEMPLATE_SCHEMA = "client";
+
+    @Transactional
+    public void createSchema(String schema) throws SQLException {
+        Connection c = connectService.getConnection(TEMPLATE_SCHEMA);
+        String sql = String.format("SELECT clone_schema('%s','%s');", TEMPLATE_SCHEMA, schema);
+        PreparedStatement stmt = c.prepareStatement(sql);
+        if (!stmt.execute()) {
             log.error("Create schema fail");
         }
+        stmt.close();
+        c.close();
     }
 
-    public void createTable(String schema) {
-        Connection c = connectService.getConnection(schema);
-        Statement stmt = null;
-        try {
-            stmt = c.createStatement();
-            StringBuilder sql = new StringBuilder();
-            // Create data types
-            sql.append("CREATE TYPE E_PERSON AS ENUM ('Client', 'Staff');");
-            sql.append("CREATE TYPE E_GENDER AS ENUM ('Male', 'Female');");
-            sql.append("CREATE TYPE E_RISK_PROFILE AS ENUM ('risk_1', 'risk_2', 'risk_3');");
-            sql.append("CREATE TYPE E_PEP_STATUS AS ENUM ('pep_status_1', 'pep_status_2', 'pep_status_3');");
-            sql.append("CREATE TYPE E_STATUS AS ENUM ('enable', 'disable');");
-            sql.append("CREATE TYPE E_COMPANY_TYPE AS ENUM ('company_type_1', 'company_type_2', 'company_type_3');");
-            sql.append("CREATE TYPE E_PORTFOLIO_TYPE AS ENUM ('portfolio_type_1', 'portfolio_type_2', 'portfolio_type_3');");
-            sql.append("CREATE TYPE E_PORTFOLIO_RISK_LEVEL AS ENUM ('portfolio_risk_level_1', 'portfolio_risk_level_2', 'portfolio_risk_level_3');");
-            sql.append("CREATE TYPE E_CURRENCY AS ENUM ('USD', 'EUR', 'JYP');");
-            sql.append("CREATE TYPE E_MAIN_SOURCE_INCOME AS ENUM ('main_source_1', 'main_source_2', 'main_source_3');");
-            sql.append("CREATE TYPE E_OTHER_SOURCE_INCOME AS ENUM ('other_source_1', 'other_source_2', 'other_source_3');");
-            sql.append("CREATE TYPE E_CONTACT_TYPE AS ENUM ('phone', 'email', 'skype', 'chat', 'other');");
-            sql.append("CREATE TYPE E_DOCUMENT_TYPE AS ENUM ('Passport', 'Driving License', 'Pan Card', 'Aadhaar Card', 'Electricity Bill', 'Gas Bill', 'Bank Account Statement', 'Phone Bill', 'Self-Certification Form', 'W8-BEN', 'W8-BEN-E', 'W8-IMY', 'W9-BEN');");
-            sql.append("CREATE TYPE E_MANDATORY_FLAG AS ENUM ('true', 'false');");
+    @Transactional
+    public void saveData(String schema, ClientInfo clientInfo) throws SQLException {
+        log.info("Begin execute: save client");
 
-            // create tables
-            sql.append("CREATE TABLE tbl_person (");
-            sql.append("id SERIAL,");
-            sql.append("title VARCHAR(255),");
-            sql.append("first_name VARCHAR(50),");
-            sql.append("middle_name VARCHAR(50),");
-            sql.append("surname VARCHAR(50),");
-            sql.append("full_name VARCHAR(255),");
-            sql.append("person_type E_PERSON,");
-            sql.append("alias VARCHAR(255),");
-            sql.append("former_name VARCHAR(255),");
-            sql.append("native_name VARCHAR(255),");
-            sql.append("date_of_birth DATE,");
-            sql.append("gender E_GENDER,");
-            sql.append("nationality VARCHAR(255),");
-            sql.append("nationality_2 VARCHAR(255),");
-            sql.append("birth_city VARCHAR(255),");
-            sql.append("birth_country VARCHAR(255),");
-            sql.append("residence_country VARCHAR(255),");
-            sql.append("tax_residency VARCHAR(255),");
-            sql.append("tax_residency_2 VARCHAR(255),");
-            sql.append("tax_residency_3 VARCHAR(255),");
-            sql.append("person_id_document INTEGER,");
-            sql.append("person_id_number INTEGER,");
-            sql.append("client_risk_profile E_RISK_PROFILE,");
-            sql.append("pep_status E_PEP_STATUS,");
-            sql.append("status E_STATUS,");
-            sql.append("occupation VARCHAR(255),");
-            sql.append("created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,");
-            sql.append("updated_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,");
-            sql.append("PRIMARY KEY(id)");
-            sql.append(");");
-
-            sql.append("CREATE TABLE tbl_company (");
-            sql.append("id SERIAL,");
-            sql.append("company_name VARCHAR(255),");
-            sql.append("company_registration_number VARCHAR(255),");
-            sql.append("company_type E_COMPANY_TYPE,");
-            sql.append("company_jurisdiction VARCHAR(255),");
-            sql.append("company_contact VARCHAR(255),");
-            sql.append("company_address VARCHAR(255),");
-            sql.append("lei_number INTEGER,");
-            sql.append("created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,");
-            sql.append("updated_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,");
-            sql.append("PRIMARY KEY(id)");
-            sql.append(");");
-
-            sql.append("CREATE TABLE tbl_portfolio (");
-            sql.append("id SERIAL,");
-            sql.append("portfolio_number INTEGER,");
-            sql.append("portfolio_description VARCHAR(255),");
-            sql.append("portfolio_type E_PORTFOLIO_TYPE,");
-            sql.append("portfolio_risk_level E_PORTFOLIO_RISK_LEVEL,");
-            sql.append("custodian_bank VARCHAR(255),");
-            sql.append("custodian_bank_contact VARCHAR(255),");
-            sql.append("portfolio_currency E_CURRENCY,");
-            sql.append("portfolio_open_date DATE,");
-            sql.append("portfolio_status E_STATUS,");
-            sql.append("created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,");
-            sql.append("updated_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,");
-            sql.append("PRIMARY KEY(id)");
-            sql.append(");");
-
-            sql.append("CREATE TABLE tbl_source_of_wealth (");
-            sql.append("id SERIAL,");
-            sql.append("personal_background TEXT,");
-            sql.append("professional_business_background TEXT,");
-            sql.append("main_source_income E_MAIN_SOURCE_INCOME,");
-            sql.append("other_main_source_income E_OTHER_SOURCE_INCOME,");
-            sql.append("growth_and_plan TEXT,");
-            sql.append("economic_purpose_and_rationale TEXT,");
-            sql.append("estimated_wealth VARCHAR(255),");
-            sql.append("estimated_annual_income VARCHAR(255),");
-            sql.append("source_funds TEXT,");
-            sql.append("source_of_wealth_corroboration TEXT,");
-            sql.append("sow_party_details VARCHAR(255),");
-            sql.append("created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,");
-            sql.append("updated_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,");
-            sql.append("PRIMARY KEY(id)");
-            sql.append(");");
-
-            sql.append("CREATE TABLE tbl_contact (");
-            sql.append("id SERIAL,");
-            sql.append("registered_address VARCHAR(255),");
-            sql.append("correspondence_address VARCHAR(255),");
-            sql.append("other_address VARCHAR(255),");
-            sql.append("registered_contact_number VARCHAR(30),");
-            sql.append("registered_email_address VARCHAR(50),");
-            sql.append("preferred_contact_method VARCHAR(255),");
-            sql.append("created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,");
-            sql.append("updated_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,");
-            sql.append("PRIMARY KEY(id)");
-            sql.append(");");
-
-            sql.append("CREATE TABLE tbl_contact_entry (");
-            sql.append("id SERIAL,");
-            sql.append("contact_date_and_time TIMESTAMP,");
-            sql.append("contact_type E_CONTACT_TYPE,");
-            sql.append("location VARCHAR(255),");
-            sql.append("subject_discussion VARCHAR(255),");
-            sql.append("content_of_discussion VARCHAR(1000),");
-            sql.append("action_required VARCHAR(255),");
-            sql.append("due_date TIMESTAMP,");
-            sql.append("created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,");
-            sql.append("updated_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,");
-            sql.append("PRIMARY KEY(id)");
-            sql.append(");");
-
-            sql.append("CREATE TABLE tbl_document (");
-            sql.append("id SERIAL,");
-            sql.append("document_type E_DOCUMENT_TYPE,");
-            sql.append("document_number INTEGER,");
-            sql.append("document_issue_date DATE,");
-            sql.append("document_expiry DATE,");
-            sql.append("document_country_of_issuance VARCHAR(255),");
-            sql.append("comments VARCHAR(255),");
-            sql.append("mandatory_flag E_MANDATORY_FLAG,");
-            sql.append("expected_date_of_receipt DATE,");
-            sql.append("actual_date_of_receipt DATE,");
-            sql.append("status E_STATUS,");
-            sql.append("created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,");
-            sql.append("updated_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,");
-            sql.append("PRIMARY KEY(id)");
-            sql.append(");");
-            stmt.executeUpdate(sql.toString());
-
-            stmt.close();
-            c.close();
-            log.error("Create tables successful");
-        } catch (SQLException e) {
-            log.error("Create tables fail");
-        }
-    }
-
-    public void createData(String schema, CompanyForm form) {
-        Connection c = connectService.getConnection(schema);
+        Connection connection = connectService.getConnection(schema);
+        connection.setAutoCommit(false);
         PreparedStatement stmt = null;
-        try {
-            c.setAutoCommit(false);
-            String company = "INSERT INTO tbl_company (company_name,company_registration_number,company_type,company_jurisdiction,company_contact,company_address,lei_number) VALUES(?,?,?,?,?,?,?);";
-            stmt = c.prepareStatement(company);
-            stmt.setString(1, form.getCompanyName());
-            stmt.setString(2, form.getCompanyRegistrationNumber());
-            stmt.setObject(3, form.getCompanyType(), Types.OTHER);
-            stmt.setString(4, form.getCompanyJurisdiction());
-            stmt.setString(5, form.getCompanyContact());
-            stmt.setString(6, form.getCompanyAddress());
-            stmt.setInt(7, form.getLeiNumber());
-            stmt.execute();
 
-            String company2 = "INSERT INTO tbl_company (company_name,company_registration_number,company_type,company_jurisdiction,company_contact,company_address,lei_number) VALUES(?,?,?,?,?,?,?);";
-            stmt = c.prepareStatement(company2);
-            stmt.setString(1, form.getCompanyName());
-            stmt.setString(2, form.getCompanyRegistrationNumber());
-            stmt.setObject(3, form.getCompanyType(), Types.OTHER);
-            stmt.setString(4, form.getCompanyJurisdiction());
-            stmt.setString(5, form.getCompanyContact());
-            stmt.setString(6, form.getCompanyAddress());
-            stmt.setInt(7, form.getLeiNumber());
-            stmt.execute();
+        String person_sql = "INSERT INTO tbl_person" +
+                "(title, first_name, middle_name, surname, full_name, person_type, alias, former_name, native_name, date_of_birth, gender, nationality, nationality_2, " +
+                "birth_city, birth_country, residence_country, tax_residency, tax_residency_2, tax_residency_3, person_id_document, person_id_number, " +
+                "client_risk_profile, pep_status, status, occupation, created_date, updated_date) " +
+                "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);";
+        stmt = connection.prepareStatement(person_sql);
+        Person person = clientInfo.getPerson();
 
-            stmt.close();
-            c.commit();
-            c.close();
-            log.error("Save company successful");
-        } catch (SQLException e) {
-            // c.rollback();
-            e.printStackTrace();
-            log.error("Save company fail");
-        }
+        stmt.setString(1, person.getTitle().getValue());
+        stmt.setString(2, person.getFirstName().getValue());
+        stmt.setString(3, person.getMiddleName().getValue());
+        stmt.setString(4, person.getSurname().getValue());
+        stmt.setString(5, person.getFullName().getValue());
+        stmt.setObject(6, person.getPersonType().getValue().toUpperCase(), Types.OTHER);
+        stmt.setString(7, person.getAlias().getValue());
+        stmt.setString(8, person.getFormerName().getValue());
+        stmt.setString(9, person.getNativeName().getValue());
+        stmt.setDate(10, Date.valueOf(person.getDateOfBirth().getValue()));
+        stmt.setObject(11, person.getGender().getValue().toUpperCase(), Types.OTHER);
+        stmt.setString(12, person.getNationality().getValue());
+        stmt.setString(13, person.getNationality2().getValue());
+        stmt.setString(14, person.getBirthCity().getValue());
+        stmt.setString(15, person.getBirthCountry().getValue());
+        stmt.setString(16, person.getResidenceCountry().getValue());
+        stmt.setString(17, person.getTaxResidency().getValue());
+        stmt.setString(18, person.getTaxResidency2().getValue());
+        stmt.setString(19, person.getTaxResidency3().getValue());
+        stmt.setInt(20, Integer.valueOf(person.getPersonIdDocument().getValue()));
+        stmt.setInt(21, Integer.valueOf(person.getPersonIdNumber().getValue()));
+        stmt.setObject(22, person.getClientRiskProfile().getValue().toUpperCase(), Types.OTHER);
+        stmt.setObject(23, person.getPepStatus().getValue().toUpperCase(), Types.OTHER);
+        stmt.setObject(24, person.getStatus().getValue().toUpperCase(), Types.OTHER);
+        stmt.setString(25, person.getOccupation().getValue());
+        stmt.execute();
+        log.info("Execute 1: Save person successful");
+
+        // Save company
+        String company = "INSERT INTO tbl_company (company_name,company_registration_number,company_type,company_jurisdiction,company_contact,company_address,lei_number) VALUES(?,?,?,?,?,?,?);";
+        stmt = connection.prepareStatement(company);
+        Company c = clientInfo.getCompany();
+
+        stmt.setString(1, c.getCompanyName().getValue());
+        stmt.setString(2, c.getCompanyRegistrationNumber().getValue());
+        stmt.setObject(3, c.getCompanyType().getValue().toUpperCase(), Types.OTHER);
+        stmt.setString(4, c.getCompanyJurisdiction().getValue());
+        stmt.setString(5, c.getCompanyContact().getValue());
+        stmt.setString(6, c.getCompanyAddress().getValue());
+        stmt.setInt(7, Integer.valueOf(c.getLeiNumber().getValue()));
+        stmt.execute();
+        log.info("Execute 2: Save company successful");
+
+        // Save portfolio
+        String portfolio = "INSERT INTO tbl_portfolio " +
+                "(portfolio_number, portfolio_description, portfolio_type, portfolio_risk_level, custodian_bank, custodian_bank_contact, portfolio_currency, portfolio_open_date, portfolio_status, created_date, updated_date) " +
+                "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);";
+        stmt = connection.prepareStatement(portfolio);
+        Portfolio p = clientInfo.getPortfolio();
+
+        stmt.setInt(1, Integer.valueOf(p.getPortfolioNumber().getValue()));
+        stmt.setString(2, p.getPortfolioDescription().getValue());
+        stmt.setObject(3, p.getPortfolioType().getValue().toUpperCase(), Types.OTHER);
+        stmt.setObject(4, p.getPortfolioRiskLevel().getValue().toUpperCase(), Types.OTHER);
+        stmt.setString(5, p.getCustodianBank().getValue());
+        stmt.setString(6, p.getCustodianBankContact().getValue());
+        stmt.setObject(7, p.getPortfolioCurrency().getValue().toUpperCase(), Types.OTHER);
+        stmt.setDate(8, Date.valueOf(p.getPortfolioOpenDate().getValue()));
+        stmt.setObject(9, p.getPortfolioStatus().getValue().toUpperCase(), Types.OTHER);
+        stmt.execute();
+        log.info("Execute 3: Save portfolio successful");
+
+        // Save source of wealth
+        String source = "INSERT INTO tbl_source_of_wealth " +
+                "(personal_background, professional_business_background, main_source_income, other_main_source_income, growth_and_plan, economic_purpose_and_rationale, estimated_wealth, estimated_annual_income, source_funds, source_of_wealth_corroboration, sow_party_details, created_date, updated_date)\n" +
+                "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);";
+        stmt = connection.prepareStatement(source);
+        SourceOfWealth s = clientInfo.getSourceOfWealth();
+
+        stmt.setString(1, s.getPersonalBackground().getValue());
+        stmt.setString(2, s.getProfessionalBusinessBackground().getValue());
+        stmt.setObject(3, s.getMainSourceIncome().getValue().toUpperCase(), Types.OTHER);
+        stmt.setObject(4, s.getOtherMainSourceIncome().getValue().toUpperCase(), Types.OTHER);
+        stmt.setString(5, s.getGrowthAndPlan().getValue());
+        stmt.setString(6, s.getEconomicPurposeAndRationale().getValue());
+        stmt.setString(7, s.getEstimatedWealth().getValue());
+        stmt.setString(8, s.getEstimatedAnnualIncome().getValue());
+        stmt.setString(9, s.getSourceFunds().getValue());
+        stmt.setString(10, s.getSourceOfWealthCorroboration().getValue());
+        stmt.setString(11, s.getSowPartyDetails().getValue());
+        stmt.execute();
+        log.info("Execute 4: Save source of wealth successful");
+
+        // Save contact
+        String contact = "INSERT INTO tbl_contact" +
+                "(registered_address, correspondence_address, other_address, registered_contact_number, registered_email_address, preferred_contact_method, created_date, updated_date)\n" +
+                "VALUES(?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);";
+        stmt = connection.prepareStatement(contact);
+        Contact ct = clientInfo.getContact();
+
+        stmt.setString(1, ct.getRegisteredAddress().getValue());
+        stmt.setString(2, ct.getCorrespondenceAddress().getValue());
+        stmt.setString(3, ct.getOtherAddress().getValue());
+        stmt.setString(4, ct.getRegisteredContactNumber().getValue());
+        stmt.setString(5, ct.getRegisteredEmailAddress().getValue());
+        stmt.setObject(6, ct.getPreferredContactMethod().getValue().toUpperCase(), Types.OTHER);
+        stmt.execute();
+        log.info("Execute 5: Save contact successful");
+
+        // Save contact entry
+        String contactEntry = "INSERT INTO tbl_contact_entry" +
+                "(contact_date_and_time, contact_type, location, subject_discussion, content_of_discussion, action_required, due_date, created_date, updated_date) " +
+                "VALUES(?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);";
+        stmt = connection.prepareStatement(contactEntry);
+        ContactEntry entry = clientInfo.getContactEntry();
+
+        stmt.setTimestamp(1, Timestamp.valueOf("2018-09-01 09:01:15"));
+        stmt.setObject(2, entry.getContactType().getValue().toUpperCase(), Types.OTHER);
+        stmt.setString(3, entry.getLocation().getValue());
+        stmt.setString(4, entry.getSubjectDiscussion().getValue());
+        stmt.setString(5, entry.getContentOfDiscussion().getValue());
+        stmt.setString(6, entry.getActionRequired().getValue());
+        stmt.setTimestamp(7, Timestamp.valueOf("2018-09-01 09:01:15"));
+        stmt.execute();
+        log.info("Execute 6: Save contact entry successful");
+
+
+        // Save document
+        String document = "INSERT INTO tbl_document " +
+                "(document_type, document_number, document_issue_date, document_expiry, document_country_of_issuance, \"comments\", mandatory_flag, expected_date_of_receipt, actual_date_of_receipt, status, created_date, updated_date) " +
+                "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);";
+        stmt = connection.prepareStatement(document);
+        Document d = clientInfo.getDocument();
+
+        stmt.setObject(1, d.getDocumentType().getValue(), Types.OTHER);
+        stmt.setInt(2, Integer.valueOf(d.getDocumentNumber().getValue()));
+        stmt.setDate(3, Date.valueOf(d.getDocumentIssueDate().getValue()));
+        stmt.setDate(4, Date.valueOf(d.getDocumentExpiry().getValue()));
+        stmt.setString(5, d.getDocumentCountryOfIssuance().getValue());
+        stmt.setString(6, d.getComments().getValue());
+        stmt.setObject(7, d.getMandatoryFlag().getValue().toUpperCase(), Types.OTHER);
+        stmt.setDate(8, Date.valueOf(d.getExpectedDateOfReceipt().getValue()));
+        stmt.setDate(9, Date.valueOf(d.getActualDateOfReceipt().getValue()));
+        stmt.setObject(10, d.getStatus().getValue().toUpperCase(), Types.OTHER);
+        stmt.execute();
+        log.info("Execute 7: Save document successful");
+
+        stmt.close();
+        connection.commit();
+        connection.close();
+
+        log.info("End execute: save client successful");
     }
 }

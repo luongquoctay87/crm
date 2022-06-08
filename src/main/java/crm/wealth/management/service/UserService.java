@@ -138,7 +138,7 @@ public class UserService implements UserDetailsService {
 		if (user == null)
 			return new ErrorResponse(HttpStatus.NOT_FOUND.value(), "Email " + email + " not found");
 		user.setPassword(encoder.encode(password));
-		mailService.sendSimpleMessage(email, "[CRM SYSTEM] - Forgot Password", "New password: " + password);
+		mailService.sendSimpleMessage(email, "[DataType SYSTEM] - Forgot Password", "New password: " + password);
 		userRepo.save(user);
 		return new ApiResponse(HttpStatus.OK.value(), "Forgot password successful");
 	}

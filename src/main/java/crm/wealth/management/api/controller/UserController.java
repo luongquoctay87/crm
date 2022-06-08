@@ -78,7 +78,7 @@ public class UserController {
             AppUser newUser = userService.addUser(form);
             return new ApiResponse(HttpStatus.OK.value(), "Create user successful", newUser.getId());
         } catch (Exception e){
-            log.info("Can not create user");
+            log.error("Can not create user");
             return new ErrorResponse(HttpStatus.NO_CONTENT.value(), "Create user fail");
         }
     }
@@ -99,7 +99,7 @@ public class UserController {
             userService.updateUser(form);
             return new ApiResponse(HttpStatus.OK.value(), "Update user successful", form.getId());
         } catch (Exception e){
-            log.info("Can not update userId ={}", form.getId());
+            log.error("Can not update userId ={}", form.getId());
             return new ErrorResponse(HttpStatus.NO_CONTENT.value(), "Update user fail");
         }
     }
@@ -120,7 +120,7 @@ public class UserController {
             userService.changePassword(user);
             return new ApiResponse(HttpStatus.OK.value(), "Change password successful", _id);
         } catch (Exception e){
-            log.info("Can not change password, userId ={}", _id);
+            log.error("Can not change password, userId ={}", _id);
             return new ErrorResponse(HttpStatus.NO_CONTENT.value(), "Change password fail");
         }
     }
@@ -134,7 +134,7 @@ public class UserController {
             userService.delete(_id);
             return new ApiResponse(HttpStatus.OK.value(), "Delete user successful");
         } catch (Exception e){
-            log.info("Can not delete user, userId ={}", _id);
+            log.error("Can not delete userId ={}", _id);
             return new ErrorResponse(HttpStatus.NO_CONTENT.value(), "Delete user fail");
         }
     }
@@ -142,12 +142,12 @@ public class UserController {
     @PutMapping("/forgot-password")
     public ApiResponse forgotPassword(@RequestParam String email) {
         try {
-            log.info("Request forgot password, email = {}, ", email);
+            log.info("Request reset password with email {}", email);
             return userService.forgotPassword(email);
         } catch (Exception e) {
-            log.error("Can not execute forgot password");
+            log.error("Can not reset password");
             log.error(e.getMessage());
-            return new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Forgot password fail");
+            return new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Reset password fail");
         }
     }
 }
