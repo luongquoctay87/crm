@@ -33,8 +33,8 @@ cloud:
     stack:
       auto: false
     credentials:
-      accessKey: AKIAWAU5ALQEYVCFI54L
-      secretKey: 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
+      accessKey: xxxxxxxxxxxxxxx
+      secretKey: xxxxxxxxxxxxxxxxxxxxxxxxx
       bucketName: weath-management
 
 logging:
