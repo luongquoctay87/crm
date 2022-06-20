@@ -9,20 +9,24 @@ import java.util.List;
 @Data
 public class PageResponse {
 
-    private List<RequestDTO> requests;
+    private List<Object> requests;
     private Object requestLists;
+
+    private int totalPages;
     private long totalElements;
 
     public PageResponse() {
     }
 
-    public PageResponse(List<RequestDTO> data, long totalElements) {
+    public PageResponse(List<Object> data, long totalElements, int totalPages) {
         this.requests = data;
+        this.totalPages = totalPages;
         this.totalElements = totalElements;
     }
 
-    public PageResponse(RequestResponse data,  long totalElements) {
+    public PageResponse(RequestResponse data,  long totalElements, int totalPages) {
         this.requestLists =  data;
+        this.totalPages = totalPages;
         this.totalElements = totalElements;
 
     }

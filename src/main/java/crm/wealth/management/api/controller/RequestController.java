@@ -31,7 +31,7 @@ public class RequestController {
                                        @RequestParam(value="status", required = false) String[] status,
                                        @RequestParam(value="priority", required = false) String priority,
                                        @RequestParam(name = "pageNo", defaultValue = "1", required = false) Integer pageNo,
-                                       @RequestParam(name = "pageSize", defaultValue = "20", required = false) Integer pageSize) throws Exception {
+                                       @RequestParam(name = "pageSize", defaultValue = "20", required = false) Integer pageSize){
         log.info("Request api GET api/v1/requests");
 
         PageResponse requests = requestService.getRequestLists(Optional.ofNullable(keyword), status, Optional.ofNullable(priority), pageNo, pageSize);

@@ -19,4 +19,8 @@ public class DataType {
     public enum GENDER {
         MALE, FEMALE
     }
+
+    public enum NullBehavior {
+        EQUALS, IS, IGNORED
+    }
 }

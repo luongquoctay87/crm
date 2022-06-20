@@ -13,11 +13,11 @@ public class RequestDTO {
 
     private String comment;
 
-    private String type;
+    private DataType.REQUEST_TYPE type;
 
-    private String status;
+    private DataType.REQUEST_STATUS status;
 
-    private String priority;
+    private DataType.REQUEST_PRIORITY priority;
 
     private Integer assignee;
 
