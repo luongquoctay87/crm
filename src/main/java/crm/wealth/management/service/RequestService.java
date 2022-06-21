@@ -15,14 +15,19 @@ import crm.wealth.management.util.DataType;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.support.PagedListHolder;
+import org.springframework.beans.support.SortDefinition;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
 
+import javax.persistence.EntityManager;
+import javax.persistence.Query;
+import javax.persistence.criteria.*;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -43,6 +48,9 @@ public class RequestService {
 
     @Autowired
     private ModelMapper mapper;
+
+    @Autowired
+    private EntityManager entityManager;
 
     @Transactional
     public Request addRequest(RequestForm f) throws Exception {
@@ -148,132 +156,42 @@ public class RequestService {
         return new Date();
     }
 
-    /**
-     * Search and Paging list request
-     * Search by request name, sort by status ( New, Pending, Approved, Rejected ), sort by priority ( Low, Medium, High ).
-     *
-     * @param keyword
-     * @param status
-     * @param priority
-     * @param pageNo
-     * @param pageSize
-     * @return
-     */
     public PageResponse getRequestLists(Optional<String> keyword, String[] status, Optional<String> priority, Integer pageNo, Integer pageSize) {
 
-        List<DataType.REQUEST_STATUS> request_statuses = new ArrayList<>();
+        CriteriaBuilder builder = entityManager.getCriteriaBuilder();
+        CriteriaQuery<Request> query = builder.createQuery(Request.class);
+        Root<Request> request = query.from(Request.class);
+        List<Predicate> predicates = new ArrayList<>();
+        List<Request> requests = new ArrayList<>();
 
-        DataType.REQUEST_PRIORITY request_priority = null;
-        
-        if (status != null && status.length > 0) {
-            for (int i = 0; i < status.length; i++) {
-                DataType.REQUEST_STATUS statusRequest = DataType.REQUEST_STATUS.valueOf(status[i].toUpperCase());
-                request_statuses.add(statusRequest);
-            }
+        if (!keyword.isPresent() && status == null && !priority.isPresent()) {
+            requests = (List<Request>) requestRepo.findAll();
+        }
+
+        if(keyword.isPresent()) {
+            predicates.add(builder.like(request.get("name"), "%" + keyword.get() + "%"));
+        }
+
+        if(status != null && status.length > 0) {
+            List<DataType.REQUEST_STATUS> request_statuses = Arrays.stream(status).map(item -> DataType.REQUEST_STATUS.valueOf(item.toUpperCase())).collect(Collectors.toList());
+            predicates.add(builder.in(request.get("status")).value(request_statuses));
         }
 
         if (priority.isPresent()) {
-            request_priority = DataType.REQUEST_PRIORITY.valueOf(priority.get().toUpperCase());
+            predicates.add(builder.equal(request.get("priority"), DataType.REQUEST_PRIORITY.valueOf(priority.get().toUpperCase())));
         }
+        query.where(predicates.toArray(new Predicate[0])).orderBy(builder.desc(request.get("createdDate")));
+        requests = entityManager.createQuery(query).getResultList();
 
-        Pageable pageable = PageRequest.of(pageNo - 1, pageSize, Sort.Direction.DESC, "createdDate");
-
-        Page<Request> requests = null;
-
-        try {
-            //        Case all params null
-            if (!keyword.isPresent() && status == null && !priority.isPresent()) {
-                requests = requestRepo.findAll(pageable);
-            }
-            //        Case has keyword
-            if (keyword.isPresent() && status == null && !priority.isPresent()) {
-                requests = requestRepo.findByNameLike(keyword.get(), pageable);
-            }
-            //        Case have keyword and status
-            if (keyword.isPresent() && status != null && status.length > 0 && !priority.isPresent()) {
-                requests = requestRepo.findByNameLikeAndStatusIn(keyword.get(), request_statuses, pageable);
-            }
-            //        Case have keyword and priority
-            if (keyword.isPresent() && priority.isPresent() && status == null) {
-                requests = requestRepo.findByNameLikeAndPriority(keyword.get(), request_priority, pageable);
-            }
-            //        Case have keyword, status and priority
-            if (keyword.isPresent() && priority.isPresent() && status != null && status.length > 0) {
-                requests = requestRepo.findByNameLikeAndStatusInAndPriority(keyword.get(), request_statuses, request_priority, pageable);
-            }
-            //        Case have status and priority
-            if (!keyword.isPresent() && status != null && status.length > 0 && priority.isPresent()) {
-                requests = requestRepo.findByStatusInAndPriority(request_statuses, request_priority, pageable);
-            }
-            //        Case have status
-            if (!keyword.isPresent() && status != null && status.length > 0 && !priority.isPresent()) {
-                requests = requestRepo.findByStatusIn(request_statuses, pageable);
-            }
-            //        Case have priority
-            if (!keyword.isPresent() && status == null && priority.isPresent()) {
-                requests = requestRepo.findByPriority(request_priority, pageable);
-            }
-
-            if (requests == null) {
-                log.error("Error when query list request from database");
-                throw new Exception("Error when query list request from database");
-            }
-
-        } catch (Exception e) {
-            log.error(e.getMessage());
-            throw new RuntimeException(e);
+        if(requests.isEmpty()) {
+            return new PageResponse();
         }
+        List<RequestDTO> dtos = requests.stream().map(item -> mapper.map(item, RequestDTO.class)).collect(Collectors.toList());
 
-        List<RequestDTO> dtos = requests.getContent().stream().map(request -> mapper.map(request, RequestDTO.class)).collect(Collectors.toList());
+        PagedListHolder<RequestDTO> pageRequest = new PagedListHolder<>(dtos);
+        pageRequest.setPage(pageNo - 1);
+        pageRequest.setPageSize(pageSize);
 
-        if (status == null) {
-
-            try {
-                PageResponse pageResponse = new PageResponse(Collections.singletonList(dtos), requests.getTotalElements(), requests.getTotalPages());
-                return pageResponse;
-            } catch (Exception e) {
-                log.error(e.getMessage());
-                throw new RuntimeException(e);
-            }
-        }
-
-        PageResponse.RequestResponse requestResponse = new PageResponse.RequestResponse();
-
-        for (int i = 0; i < dtos.size(); i++) {
-
-            RequestDTO requestDTO = dtos.get(i);
-
-            DataType.REQUEST_STATUS requestStatus = requestDTO.getStatus();
-
-            switch (requestStatus) {
-                case NEW:
-                    requestResponse.getNewStatus().add(requestDTO);
-                    break;
-                case PENDING:
-                    requestResponse.getPendingStatus().add(requestDTO);
-                    break;
-                case REVIEWED:
-                    requestResponse.getReviewedStatus().add(requestDTO);
-                    break;
-                case APPROVED:
-                    requestResponse.getApprovedStatus().add(requestDTO);
-                    break;
-                case REJECTED:
-                    requestResponse.getRejectedStatus().add(requestDTO);
-                    break;
-                case CANCEL:
-                    requestResponse.getCanceledStatus().add(requestDTO);
-                    break;
-                default:
-            }
-        }
-
-        PageResponse pageResponse = new PageResponse();
-        pageResponse.setRequestLists(requestResponse);
-        pageResponse.setTotalPages(requests.getTotalPages());
-        pageResponse.setTotalElements(requests.getTotalElements());
-
-        return pageResponse;
-
+        return new PageResponse(pageRequest.getSource(), pageRequest.getNrOfElements(), pageRequest.getPageCount());
     }
 }

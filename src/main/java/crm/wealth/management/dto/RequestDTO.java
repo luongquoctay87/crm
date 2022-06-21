@@ -2,10 +2,12 @@ package crm.wealth.management.dto;
 
 import crm.wealth.management.util.DataType;
 import lombok.Data;
+
+import java.io.Serializable;
 import java.util.Date;
 
 @Data
-public class RequestDTO {
+public class RequestDTO implements Serializable {
 
     private Long id;
 
