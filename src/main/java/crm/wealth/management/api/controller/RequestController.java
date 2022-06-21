@@ -4,13 +4,20 @@ package crm.wealth.management.api.controller;
 import crm.wealth.management.api.form.RequestForm;
 import crm.wealth.management.api.response.ApiResponse;
 import crm.wealth.management.api.response.ErrorResponse;
+import crm.wealth.management.api.response.ViewResponse;
+import crm.wealth.management.dto.RequestDTO;
 import crm.wealth.management.model.Request;
 import crm.wealth.management.service.RequestService;
 import crm.wealth.management.util.DataType;
 import lombok.extern.slf4j.Slf4j;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/requests")
@@ -19,17 +26,44 @@ public class RequestController {
 
     @Autowired
     private RequestService requestService;
+    @Autowired
+    private ModelMapper mapper;
 
     private final String APPROVED = "APPROVED";
 
+
+    @GetMapping
+    public ApiResponse getRequestList(@RequestParam(name = "search") Optional<String> _search,
+                                      @RequestParam(name = "status") Optional<String[]> _status,
+                                      @RequestParam(name = "priority") Optional<String[]> _priority,
+                                      @RequestParam(name = "sort", defaultValue = "id,desc") String[] _sort,
+                                      @RequestParam(name = "pageNo", defaultValue = "1") Optional<Integer> _pageNo,
+                                      @RequestParam(name = "pageSize", defaultValue = "20") Optional<Integer> _pageSize) {
+
+        log.info("Request api GET api/v1/requests");
+
+        List<RequestDTO> requests = requestService.findAll(_search, _status,_priority, _sort, _pageNo.get(), _pageSize.get())
+                .stream().map(request -> mapper.map(request, RequestDTO.class)).collect(Collectors.toList());
+
+        long count = requestService.count();
+        ViewResponse view = ViewResponse.builder()
+                .pageNo(_pageNo.get())
+                .pageSize(_pageSize.get())
+                .total(count)
+                .items(requests)
+                .build();
+
+        return new ApiResponse(HttpStatus.OK.value(), "requests", view);
+    }
+
     @PostMapping
-    public ApiResponse createRequest (@RequestBody RequestForm form) {
+    public ApiResponse createRequest(@RequestBody RequestForm form) {
         log.info("Request api POST api/v1/requests");
 
         try {
             Request request = requestService.addRequest(form);
             return new ApiResponse(HttpStatus.OK.value(), "Create request successful", request.getId());
-        } catch (Exception e){
+        } catch (Exception e) {
             log.error("Can not create request review");
             return new ErrorResponse(HttpStatus.NO_CONTENT.value(), "Create request fail");
         }
@@ -43,7 +77,7 @@ public class RequestController {
         try {
             requestService.saveRequest(request, form);
             return new ApiResponse(HttpStatus.OK.value(), "Update request successful", form.getId());
-        } catch (Exception e){
+        } catch (Exception e) {
             log.error("Can not request requestId ={}", form.getId());
             return new ErrorResponse(HttpStatus.NO_CONTENT.value(), "Update request fail");
         }
@@ -59,7 +93,7 @@ public class RequestController {
             request.setAssignee(assignee);
             requestService.saveRequest(request);
             return new ApiResponse(HttpStatus.OK.value(), "Assign request successful", _id);
-        } catch (Exception e){
+        } catch (Exception e) {
             log.error("Can not assign request, requestId ={}", _id);
             return new ErrorResponse(HttpStatus.NO_CONTENT.value(), "Assign request fail");
         }
@@ -75,7 +109,7 @@ public class RequestController {
             request.setPriority(DataType.REQUEST_PRIORITY.valueOf(priority.toUpperCase()));
             requestService.saveRequest(request);
             return new ApiResponse(HttpStatus.OK.value(), "Change priority successful", _id);
-        } catch (Exception e){
+        } catch (Exception e) {
             log.error("Can not change priority, requestId ={}", _id);
             return new ErrorResponse(HttpStatus.NO_CONTENT.value(), "Change priority fail");
         }
@@ -98,7 +132,7 @@ public class RequestController {
             request.setStatus(DataType.REQUEST_STATUS.valueOf(status.toUpperCase()));
             requestService.saveRequest(request);
             return new ApiResponse(HttpStatus.OK.value(), String.format("Request is %s", status), _id);
-        } catch (Exception e){
+        } catch (Exception e) {
             log.error("Can not change status, requestId ={}", _id);
             return new ErrorResponse(HttpStatus.NO_CONTENT.value(), "Change status fail");
         }

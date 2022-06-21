@@ -13,7 +13,7 @@ import java.util.List;
 public interface UserRepo extends PagingAndSortingRepository<AppUser, Long> {
     AppUser findByUsername(String username);
 
-    @Query(value = "FROM AppUser u where u.username != 'sysadmin' AND u.fullName LIKE :keyword ORDER BY u.id")
+    @Query(value = "FROM AppUser u WHERE u.username != 'sysadmin' AND u.fullName LIKE :keyword ORDER BY u.id")
     Page<AppUser> findAllUsers(String keyword, Pageable pageable);
 
     @Query(value = "SELECT DISTINCT r.name FROM tbl_role_permission_activities rpa " +
