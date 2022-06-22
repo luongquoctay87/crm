@@ -1,24 +1,30 @@
 package crm.wealth.management.service;
 
 import com.google.gson.Gson;
+import crm.wealth.management.api.form.ClientInfo;
+import crm.wealth.management.api.form.Person;
 import crm.wealth.management.api.form.RequestForm;
 import crm.wealth.management.config.ResourceNotFoundException;
 import crm.wealth.management.model.Client;
-import crm.wealth.management.api.form.ClientInfo;
-import crm.wealth.management.api.form.Person;
 import crm.wealth.management.model.Request;
 import crm.wealth.management.repository.ClientRepo;
 import crm.wealth.management.repository.RequestRepo;
 import crm.wealth.management.util.DataType;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -139,4 +145,86 @@ public class RequestService {
         return new Date();
     }
 
+    public long count() {
+        return requestRepo.count();
+    }
+
+    public List<Request> findAll(Optional<String> search, Optional<String[]> status, Optional<String[]> priority, String[] sort, int pageNo, int pageSize) {
+
+        String keyword = "%";
+        if (search.isPresent()) {
+            keyword = "%" + search.get() + "%";
+        }
+
+        List<String> statuses = new ArrayList<>();
+        if (status.isPresent() && status.get().length > 0) {
+            for (int i = 0; i < status.get().length; i++) {
+                String st = status.get()[i];
+                statuses.add(st.toUpperCase());
+            }
+        } else {
+            statuses = getStatusList();
+        }
+
+        List<String> priorities = new ArrayList<>();
+        if (priority.isPresent() && priority.get().length > 0) {
+            for (int i = 0; i < priority.get().length; i++) {
+                String p = priority.get()[i];
+                priorities.add(p.toUpperCase());
+            }
+        } else {
+            priorities = getPriorityList();
+        }
+
+        List<Sort.Order> orders = new ArrayList<>();
+        if (sort[0].contains(",")) {
+            // will sort more than 2 columns
+            for (String sortOrder : sort) {
+                // sortOrder="column, direction"
+                String[] _sort = sortOrder.split(",");
+                orders.add(new Sort.Order(getSortDirection(_sort[1]), _sort[0]));
+            }
+        } else {
+            // sort=[column, direction]
+            orders.add(new Sort.Order(getSortDirection(sort[1]), sort[0]));
+        }
+
+        if (pageNo > 0) pageNo = pageNo - 1;
+
+        Pageable pageable = PageRequest.of(pageNo, pageSize, Sort.by(orders));
+        Page<Request> pagedResult = requestRepo.findAllRequest(keyword, statuses, priorities, pageable);
+        if (pagedResult.hasContent()) {
+            return pagedResult.getContent();
+        } else {
+            return new ArrayList<Request>();
+        }
+    }
+
+    private List<String> getPriorityList() {
+        List<String> priority = new ArrayList();
+        priority.add(DataType.REQUEST_PRIORITY.LOW.toString());
+        priority.add(DataType.REQUEST_PRIORITY.MEDIUM.toString());
+        priority.add(DataType.REQUEST_PRIORITY.HIGH.toString());
+        return priority;
+    }
+
+    private List<String> getStatusList() {
+        List<String> statuses = new ArrayList();
+        statuses.add(DataType.REQUEST_STATUS.NEW.toString());
+        statuses.add(DataType.REQUEST_STATUS.PENDING.toString());
+        statuses.add(DataType.REQUEST_STATUS.REVIEWED.toString());
+        statuses.add(DataType.REQUEST_STATUS.APPROVED.toString());
+        statuses.add(DataType.REQUEST_STATUS.REJECTED.toString());
+        statuses.add(DataType.REQUEST_STATUS.CANCEL.toString());
+        return statuses;
+    }
+
+    private Sort.Direction getSortDirection(String direction) {
+        if (direction.equals("asc")) {
+            return Sort.Direction.ASC;
+        } else if (direction.equals("desc")) {
+            return Sort.Direction.DESC;
+        }
+        return Sort.Direction.ASC;
+    }
 }
