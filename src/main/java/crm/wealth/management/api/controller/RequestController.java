@@ -33,7 +33,7 @@ public class RequestController {
                                        @RequestParam(name = "pageSize", defaultValue = "20", required = false) Integer pageSize){
         log.info("Request api GET api/v1/requests");
 
-        PageResponse requests = requestService.getRequestLists(Optional.ofNullable(keyword), status, Optional.ofNullable(priority), pageNo, pageSize);
+        PageResponse requests = requestService.getRequestLists(Optional.ofNullable(keyword), Optional.ofNullable(status), Optional.ofNullable(priority), pageNo, pageSize);
         return new ApiResponse(HttpStatus.OK.value(), null, requests);
     }
 

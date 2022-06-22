@@ -145,24 +145,20 @@ public class RequestService {
         return new Date();
     }
 
-    public PageResponse getRequestLists(Optional<String> keyword, String[] status, Optional<String> priority, Integer pageNo, Integer pageSize) {
+    public PageResponse getRequestLists(Optional<String> keyword, Optional<String[]> status, Optional<String> priority, Integer pageNo, Integer pageSize) {
 
         CriteriaBuilder builder = entityManager.getCriteriaBuilder();
         CriteriaQuery<Request> query = builder.createQuery(Request.class);
         Root<Request> request = query.from(Request.class);
         List<Predicate> predicates = new ArrayList<>();
-        List<Request> requests = new ArrayList<>();
-
-        if (!keyword.isPresent() && status == null && !priority.isPresent()) {
-            requests = (List<Request>) requestRepo.findAll();
-        }
+        List<Request> requests = entityManager.createQuery("SELECT r FROM Request r ORDER BY r.createdDate DESC").setFirstResult(pageNo - 1).setMaxResults(pageSize).getResultList();
 
         if (keyword.isPresent()) {
             predicates.add(builder.like(request.get("name"), "%" + keyword.get() + "%"));
         }
 
-        if (status != null && status.length > 0) {
-            List<DataType.REQUEST_STATUS> request_statuses = Arrays.stream(status).map(item -> DataType.REQUEST_STATUS.valueOf(item.toUpperCase())).collect(Collectors.toList());
+        if (status.isPresent()) {
+            List<DataType.REQUEST_STATUS> request_statuses = Arrays.stream(status.get()).map(item -> DataType.REQUEST_STATUS.valueOf(item.toUpperCase())).collect(Collectors.toList());
             predicates.add(builder.in(request.get("status")).value(request_statuses));
         }
 
@@ -170,18 +166,10 @@ public class RequestService {
             predicates.add(builder.equal(request.get("priority"), DataType.REQUEST_PRIORITY.valueOf(priority.get().toUpperCase())));
         }
         query.where(predicates.toArray(new Predicate[0])).orderBy(builder.desc(request.get("createdDate")));
-        requests = entityManager.createQuery(query).getResultList();
+        requests = entityManager.createQuery(query).setFirstResult(pageNo - 1).setMaxResults(pageSize).getResultList();
 
-        if (requests.isEmpty()) {
-            return new PageResponse();
-        }
         List<RequestDTO> dtos = requests.stream().map(item -> mapper.map(item, RequestDTO.class)).collect(Collectors.toList());
-
-        PagedListHolder<RequestDTO> pageRequest = new PagedListHolder<>(dtos);
-        pageRequest.setPage(pageNo - 1);
-        pageRequest.setPageSize(pageSize);
-
-        return new PageResponse(pageRequest.getSource(), pageRequest.getNrOfElements(), pageRequest.getPageCount());
+        return requests.isEmpty() ? new PageResponse() : new PageResponse(dtos, dtos.size());
     }
 }
 
