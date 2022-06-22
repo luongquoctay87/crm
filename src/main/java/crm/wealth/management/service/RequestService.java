@@ -1,40 +1,46 @@
 package crm.wealth.management.service;
 
 import com.google.gson.Gson;
-import crm.wealth.management.api.form.RequestForm;
-import crm.wealth.management.config.ResourceNotFoundException;
-import crm.wealth.management.model.Client;
 import crm.wealth.management.api.form.ClientInfo;
 import crm.wealth.management.api.form.Person;
+import crm.wealth.management.api.form.RequestForm;
+import crm.wealth.management.config.ResourceNotFoundException;
+import crm.wealth.management.dto.PageResponse;
+import crm.wealth.management.dto.RequestDTO;
+import crm.wealth.management.model.Client;
 import crm.wealth.management.model.Request;
 import crm.wealth.management.repository.ClientRepo;
 import crm.wealth.management.repository.RequestRepo;
 import crm.wealth.management.util.DataType;
 import lombok.extern.slf4j.Slf4j;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.support.PagedListHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
+import javax.persistence.EntityManager;
+import javax.persistence.criteria.*;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
 public class RequestService {
 
+    private final String CLIENT = "client_";
     @Autowired
     private RequestRepo requestRepo;
-
     @Autowired
     private ClientRepo clientRepo;
-
     @Autowired
     private SchemaService schemaService;
-
-    private final String CLIENT = "client_";
+    @Autowired
+    private ModelMapper mapper;
+    @Autowired
+    private EntityManager entityManager;
 
     @Transactional
     public Request addRequest(RequestForm f) {
@@ -139,4 +145,43 @@ public class RequestService {
         return new Date();
     }
 
+    public PageResponse getRequestLists(Optional<String> keyword, String[] status, Optional<String> priority, Integer pageNo, Integer pageSize) {
+
+        CriteriaBuilder builder = entityManager.getCriteriaBuilder();
+        CriteriaQuery<Request> query = builder.createQuery(Request.class);
+        Root<Request> request = query.from(Request.class);
+        List<Predicate> predicates = new ArrayList<>();
+        List<Request> requests = new ArrayList<>();
+
+        if (!keyword.isPresent() && status == null && !priority.isPresent()) {
+            requests = (List<Request>) requestRepo.findAll();
+        }
+
+        if (keyword.isPresent()) {
+            predicates.add(builder.like(request.get("name"), "%" + keyword.get() + "%"));
+        }
+
+        if (status != null && status.length > 0) {
+            List<DataType.REQUEST_STATUS> request_statuses = Arrays.stream(status).map(item -> DataType.REQUEST_STATUS.valueOf(item.toUpperCase())).collect(Collectors.toList());
+            predicates.add(builder.in(request.get("status")).value(request_statuses));
+        }
+
+        if (priority.isPresent()) {
+            predicates.add(builder.equal(request.get("priority"), DataType.REQUEST_PRIORITY.valueOf(priority.get().toUpperCase())));
+        }
+        query.where(predicates.toArray(new Predicate[0])).orderBy(builder.desc(request.get("createdDate")));
+        requests = entityManager.createQuery(query).getResultList();
+
+        if (requests.isEmpty()) {
+            return new PageResponse();
+        }
+        List<RequestDTO> dtos = requests.stream().map(item -> mapper.map(item, RequestDTO.class)).collect(Collectors.toList());
+
+        PagedListHolder<RequestDTO> pageRequest = new PagedListHolder<>(dtos);
+        pageRequest.setPage(pageNo - 1);
+        pageRequest.setPageSize(pageSize);
+
+        return new PageResponse(pageRequest.getSource(), pageRequest.getNrOfElements(), pageRequest.getPageCount());
+    }
 }
+

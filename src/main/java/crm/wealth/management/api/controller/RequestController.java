@@ -4,6 +4,7 @@ package crm.wealth.management.api.controller;
 import crm.wealth.management.api.form.RequestForm;
 import crm.wealth.management.api.response.ApiResponse;
 import crm.wealth.management.api.response.ErrorResponse;
+import crm.wealth.management.dto.PageResponse;
 import crm.wealth.management.model.Request;
 import crm.wealth.management.service.RequestService;
 import crm.wealth.management.util.DataType;
@@ -11,6 +12,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/requests")
@@ -21,6 +24,18 @@ public class RequestController {
     private RequestService requestService;
 
     private final String APPROVED = "APPROVED";
+
+    @GetMapping
+    public ApiResponse getRequestLists(@RequestParam(value="keyword", required = false) String keyword,
+                                       @RequestParam(value="status", required = false) String[] status,
+                                       @RequestParam(value="priority", required = false) String priority,
+                                       @RequestParam(name = "pageNo", defaultValue = "1", required = false) Integer pageNo,
+                                       @RequestParam(name = "pageSize", defaultValue = "20", required = false) Integer pageSize){
+        log.info("Request api GET api/v1/requests");
+
+        PageResponse requests = requestService.getRequestLists(Optional.ofNullable(keyword), status, Optional.ofNullable(priority), pageNo, pageSize);
+        return new ApiResponse(HttpStatus.OK.value(), null, requests);
+    }
 
     @PostMapping
     public ApiResponse createRequest (@RequestBody RequestForm form) {
