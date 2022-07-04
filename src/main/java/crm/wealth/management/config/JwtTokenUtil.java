@@ -40,7 +40,7 @@ public class JwtTokenUtil implements Serializable {
 		return claimsResolver.apply(claims);
 	}
 
-	private Claims getAllClaimsFromToken(String token) {
+	public Claims getAllClaimsFromToken(String token) {
 		return Jwts.parser().setSigningKey(secretKey).parseClaimsJws(token).getBody();
 	}
 
@@ -56,6 +56,8 @@ public class JwtTokenUtil implements Serializable {
 
 	public String generateToken(UserDetails userDetails) {
 		Map<String, Object> claims = new HashMap<>();
+		claims.put("created", new Date().getTime());
+		claims.put("username", userDetails.getUsername());
 		return doGenerateToken(claims, userDetails.getUsername());
 	}
 
@@ -72,5 +74,13 @@ public class JwtTokenUtil implements Serializable {
 	public Boolean validateToken(String token, UserDetails userDetails) {
 		final String username = getUsernameFromToken(token);
 		return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
+	}
+
+	public String getCreatedFromToken(String token) {
+		final Claims claims = getAllClaimsFromToken(token);
+		if (claims == null) {
+			return "";
+		}
+		return claims.get("created").toString();
 	}
 }
